@@ -52,7 +52,7 @@ if __name__ == '__main__':
         model_info = json.load(f)
     model = CLIP(**model_info)
     # model_file = 'total_pt/total14.pt'
-    model_file = './lr1e-10_le.pt'
+    model_file = './total_pt/only_ldloss.pt'
     model.load_state_dict(torch.load(model_file, map_location='cpu'), strict=False)
     model.eval()
     clipmodel = model.to(device)
