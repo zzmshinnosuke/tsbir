@@ -6,6 +6,7 @@ images/
 data/
 .vscode/
 model_pt/
+runs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

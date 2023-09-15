@@ -27,7 +27,17 @@ def get_parser(prog='tsbir'):
     parser.add_argument('--class_number',
                         type=int,
                         default=41,
-                        help='the class number for a sketch dataset, run python scripts/dataset_statistic.py')
+                        help='the class number for a sketch dataset')
+    
+    parser.add_argument('--logger_comment',
+                        type=str,
+                        default="tsbir_SFSD_",
+                        help='logger name')
+    
+    parser.add_argument('--logger_path',
+                        type=str,
+                        default="./runs/",
+                        help='logger save path')
     
     # model
     # parser.add_argument('--model',

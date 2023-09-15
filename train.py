@@ -15,6 +15,7 @@ import pickle
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
+from tensorboardX import SummaryWriter
 
 from transformers.models.gpt2.modeling_gpt2 import GPT2Config
 
@@ -28,13 +29,13 @@ input_dim = 512
 hidden_dim = 256
 output_dim = 40
 
-def train(args, train_dataloader, clipmodel, gptmodel, classmodel):
+def train(args, logger, train_dataloader, clipmodel, gptmodel, classmodel):
     loss_img = nn.CrossEntropyLoss().to(device)
     loss_txt_sketch = nn.CrossEntropyLoss().to(device)
     optimizer = AdamW(clipmodel.parameters(), lr=1e-6)
     ASL_Loss = AsymmetricLossOptimized()
-    for i in range(args.n_epoch):
-        step = 0
+    step = 0
+    for epoch in range(args.n_epoch):
         for batch in tqdm(train_dataloader):
             step += 1
             image, sketch, txt, cate, tokens, masks = batch
@@ -78,8 +79,7 @@ def train(args, train_dataloader, clipmodel, gptmodel, classmodel):
             Ld_loss, outputs, _ = gptmodel(tokens, fused_feature, labels=tokens, attention_mask=masks)
             # print(Ld_loss)
 
-            # total_loss = (10 * Lc_loss + Ld_loss + 100 * Le_loss) / 111
-            total_loss = Le_loss
+            total_loss = (10 * Lc_loss + Ld_loss + 100 * Le_loss) / 111
             
             total_loss.backward()
             if device == "cpu":
@@ -90,10 +90,26 @@ def train(args, train_dataloader, clipmodel, gptmodel, classmodel):
             optimizer.zero_grad()
             
             if step % 100 == 0:
-                print('[%d / %d] loss: %.10f' %(i + 1, step, total_loss))
+                print('[%d / %d] loss: %.10f' %(epoch, step, total_loss))
+                logger.add_scalar("loss/le_loss", Le_loss.detach().cpu().numpy(), step)
+                logger.add_scalar("loss/lc_loss", Lc_loss.detach().cpu().numpy(), step)
+                logger.add_scalar("loss/ld_loss", Ld_loss.detach().cpu().numpy(), step)
+                logger.add_scalar("loss/total_loss", total_loss.detach().cpu().numpy(), step)
+                torch.save({
+                    'epoch':epoch,
+                    'opt':args,
+                    'model_state_dict':clipmodel.state_dict()},
+                    logger.file_writer.get_logdir()+'/latest_checkpoint.pth'
+                )
             
         # torch.save(clipmodel.state_dict(), "total" + str(i) + ".pt")
-    torch.save(clipmodel.state_dict(), "only_leloss.pt")
+    # torch.save(clipmodel.state_dict(), "only_leloss.pt")
+    torch.save({
+            'epoch':epoch,
+            'opt':args,
+            'model_state_dict':clipmodel.state_dict()},
+            logger.file_writer.get_logdir()+'/latest_checkpoint.pth'
+        )
 
 if __name__ == '__main__':
     parser = get_parser()
@@ -102,6 +118,11 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     train_dataloader = get_loader(args, 'train')
+
+    logger = SummaryWriter(comment=args.logger_comment)
+    print('Log files saved to', logger.file_writer.get_logdir())
+    for k in list(args.__dict__.keys()):
+        logger.add_text(k, str(args.__dict__[k]))
 
     # load clip model
     model_config_file = './code/training/model_configs/ViT-B-16.json'
@@ -147,7 +168,8 @@ if __name__ == '__main__':
     classmodel.train()
     classmodel = classmodel.to(device)
 
-    train(args, train_dataloader, clipmodel, gptmodel, classmodel)
+    train(args, logger, train_dataloader, clipmodel, gptmodel, classmodel)
+    logger.close()
 
 '''
 python train.py --dataset SFSDDataset --dataset_root_path ~/datasets/SFSD --batch_size 16
