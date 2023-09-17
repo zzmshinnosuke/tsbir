@@ -40,10 +40,6 @@ def get_parser(prog='tsbir'):
                         help='logger save path')
     
     # model
-    # parser.add_argument('--model',
-    #                     required=True,
-    #                     help='the model type')
-    
     parser.add_argument('--batch_size',
                         type=int,
                         default=1,
@@ -58,6 +54,11 @@ def get_parser(prog='tsbir'):
                         type=float,
                         default=0.1,
                         help='the dropout ratio')
+    
+    parser.add_argument('--resume',
+                        type=str,
+                        default="./runs/Sep15_18-41-49_cu02tsbir_SFSD_/latest_checkpoint.pth",
+                        help='model postion')
     
     #lr_scheduler:
     parser.add_argument('--learning_rate',
@@ -79,6 +80,7 @@ def get_parser(prog='tsbir'):
                         type=float,
                         default=0.5,
                         help='lr_scheduler learning_rate_factor')
+    
     
     
     return parser

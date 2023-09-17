@@ -2,15 +2,20 @@
 # -*- coding: utf-8 -*-
 # Created on 2023-09-11 10:50:39
 # @Author: zzm
+
 from PIL import Image
+import PIL.ImageDraw as ImageDraw
 import numpy as np
 import glob
+import os
+import json
 
+import torch
 from torch.utils.data import Dataset
-from transformers.modeling_utils import *
+# from transformers.modeling_utils import *
 from transformers import GPT2Tokenizer
 
-from code.clip import _transform, tokenize
+from code.clip import _transform
 
 MAX_LENGTH = 77
 input_resolution = 224
@@ -61,9 +66,10 @@ class SFSDDataset(Dataset):
             print(item["filename"])
             caption = "test"
         image_path = os.path.join(self.images_path, item["reference"])
-        sketch_path = os.path.join(self.sketch_path, imageId + ".jpeg")
+        # sketch_path = os.path.join(self.sketch_path, imageId + ".jpeg")
         image = Image.open(image_path)
-        sketch = Image.open(sketch_path)
+        # sketch = Image.open(sketch_path)
+        sketch = Image.fromarray(self.json2image(item))
         image_tran = self._transform(image)
         sketch_tran = self._transform(sketch)
         
@@ -79,4 +85,24 @@ class SFSDDataset(Dataset):
         tokens[torch.arange(len(tokenized))] = torch.LongTensor(tokenized)
 
         return image_tran, sketch_tran, caption, cate , tokens, masks
+    
+    def json2image(self, info):
+        """
+        info.keys(): ['filename', 'resolution', 'captions', 'scene', 'objects']
+        objects[0].keys(): ['name', 'category', 'strokes', 'integrity', 
+                            'similarity', 'color', 'id', 'direction', 'quality']
+        strokes[0].keys(): ['color', 'thickness', 'id', 'points']
+        """
+        # width,height
+        width, height = info['resolution']
+        src_img = Image.new("RGB", (width,height), (255,255,255))
+        draw = ImageDraw.Draw(src_img)       
+        objects=info['objects']
+        assert len(objects)<256,'too much object {}>=256'.format(len(objects))
+        for obj in objects:
+            for stroke in obj['strokes']:
+                points=tuple(tuple(p) for p in stroke['points'])
+                draw.line(points, fill=(0,0,0)) 
+        return np.array(src_img)
+
         
