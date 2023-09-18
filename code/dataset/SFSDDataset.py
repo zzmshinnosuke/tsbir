@@ -12,10 +12,9 @@ import json
 
 import torch
 from torch.utils.data import Dataset
-# from transformers.modeling_utils import *
 from transformers import GPT2Tokenizer
 
-from code.clip import _transform
+from code.clip import _transform, tokenize
 
 MAX_LENGTH = 77
 input_resolution = 224
@@ -84,7 +83,9 @@ class SFSDDataset(Dataset):
         tokens = torch.zeros(MAX_LENGTH).long()
         tokens[torch.arange(len(tokenized))] = torch.LongTensor(tokenized)
 
-        return image_tran, sketch_tran, caption, cate , tokens, masks
+        txt = tokenize([str(caption)])[0]
+
+        return image_tran, sketch_tran, txt, cate , tokens, masks
     
     def json2image(self, info):
         """

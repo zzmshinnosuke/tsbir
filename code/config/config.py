@@ -31,7 +31,7 @@ def get_parser(prog='tsbir'):
     
     parser.add_argument('--logger_comment',
                         type=str,
-                        default="tsbir_SFSD_",
+                        default="tsbir_SFSD",
                         help='logger name')
     
     parser.add_argument('--logger_path',

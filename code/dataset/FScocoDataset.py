@@ -1,9 +1,8 @@
 from PIL import Image
-import numpy as np
-import glob
+import os
 
+import torch
 from torch.utils.data import Dataset
-from transformers.modeling_utils import *
 from transformers import GPT2Tokenizer
 
 from code.clip import _transform, tokenize
@@ -17,56 +16,43 @@ class FScocoDataset(Dataset):
         self.split = split
         self.root_path = config.dataset_root_path
         self.images_path = os.path.join(self.root_path, "images")
-        self.sketch_path = os.path.join(self.root_path, "sketchImg")
+        self.sketch_path = os.path.join(self.root_path, "raster_sketches")
         self._transform = _transform(input_resolution, is_train=False)
         self.files = list()
         self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
         self.load_files_path()
-        self.load_categories()
-
-    def load_categories(self):
-        file = os.path.join(self.root_path, "categories_info.json")
-        with open(file, 'r') as fp:
-            self.categories_info = json.load(fp)
 
     def load_files_path(self):
-        assert self.split in ['train', 'test', 'traintest'], 'unknown split {}'.format(self.split)
+        assert self.split in ['train', 'val', 'valid', 'test', 'trainval'], 'unknown split {}'.format(self.split)
 
-        if self.split == 'traintest':
-            self.files = glob.glob(os.path.join(self.root_path, 'sketch', '*.json'))
-        else: 
-            filename_txt = 'train_names.txt' if self.split == 'train' else 'test_names.txt'
-            filename_path = os.path.join(self.root_path, filename_txt)
-            assert os.path.exists(filename_path), 'not find {}'.format(filename_path)
-            with open(filename_path, 'r') as f:
-                self.files=[os.path.join(self.root_path, 'sketch', line.strip()) for line in f.readlines()]
-        assert len(self.files)>0, 'no sketch json file find in {}'.format(self.root_path)
+        filename_txt = 'FScocoTrain.txt' if self.split == 'train' else 'FScocoTest.txt'
+        filename_path = os.path.join(self.root_path, filename_txt)
+        assert os.path.exists(filename_path), 'not find {}'.format(filename_txt)
+
+        self.files = []
+        with open(filename_path, 'r') as f:
+            for line in f.readlines():
+                self.files.append(line.strip())
+
+        assert len(self.files) > 0, 'no txt file find in {}'.format(self.root_path)
         
     def __len__(self):
         return len(self.files)
 
     def __getitem__(self, index):
-        with open(self.files[index], 'r') as fp:
-            item = json.load(fp)
-            item["filename"] = os.path.basename(self.files[index])
+        image_id = self.files[index]
+        caption_path = os.path.join(self.root_path, 'text', image_id + '.txt')
+        with open(caption_path, 'r', encoding='utf-8') as f:
+                caption = f.readline().strip()
 
-        imageId = str(item['reference'].split('.')[0])
-        if 'captions' in item.keys():
-            caption = item['captions'][0]
-        else:
-            print(item["filename"])
-            caption = "test"
-        image_path = os.path.join(self.images_path, item["reference"])
-        sketch_path = os.path.join(self.sketch_path, imageId + ".jpeg")
+        image_path = os.path.join(self.images_path, image_id + ".jpg")
+        sketch_path = os.path.join(self.sketch_path, image_id + ".jpg")
         image = Image.open(image_path)
         sketch = Image.open(sketch_path)
         image_tran = self._transform(image)
         sketch_tran = self._transform(sketch)
         
-        categories = dict.fromkeys(self.categories_info, 0)
-        for obj in item['objects']:
-            categories[obj['category']] = 1
-        cate = torch.tensor(np.array(list(categories.values())))
+        cate = 0
         
         tokenized = self.tokenizer.encode("<|endoftext|> " + caption + " <|endoftext|>")[:MAX_LENGTH]
         masks = torch.zeros(MAX_LENGTH)
@@ -74,5 +60,7 @@ class FScocoDataset(Dataset):
         tokens = torch.zeros(MAX_LENGTH).long()
         tokens[torch.arange(len(tokenized))] = torch.LongTensor(tokenized)
 
-        return image_tran, sketch_tran, caption, cate , tokens, masks
+        txt = tokenize([str(caption)])[0]
+
+        return image_tran, sketch_tran, txt, cate , tokens, masks
         

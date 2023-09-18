@@ -39,8 +39,8 @@ def train(args, logger, train_dataloader, clipmodel, gptmodel, classmodel):
         for batch in tqdm(train_dataloader):
             step += 1
             image, sketch, txt, cate, tokens, masks = batch
-            image, sketch, cate, tokens, masks = image.cuda(), sketch.cuda(), cate.cuda(), tokens.cuda(), masks.cuda()
-            txt = tokenize([str(txt)])[0].unsqueeze(0).to(device)
+            image, sketch, txt, cate, tokens, masks = image.cuda(), sketch.cuda(), txt.cuda(), cate.cuda(), tokens.cuda(), masks.cuda()
+            
             image_feature, fused_feature = clipmodel(image, txt, sketch)
             sketch_feature = clipmodel.encode_sketch(sketch)
             text_feature = clipmodel.encode_text(txt)
@@ -58,19 +58,20 @@ def train(args, logger, train_dataloader, clipmodel, gptmodel, classmodel):
             Le_loss = (loss_img(logits_per_image, ground_truth) + loss_txt_sketch(logits_per_fuse, ground_truth)) / 2
 
             #Lc
-            logit_txt = classmodel(text_feature.float())
-            logit_img = classmodel(image_feature.float())
-            logit_sketch = classmodel(sketch_feature.float())
-            Lc_loss_txt = ASL_Loss(logit_txt, cate)
-            Lc_loss_img = ASL_Loss(logit_img, cate)
-            Lc_loss_sketch = ASL_Loss(logit_sketch, cate)
-            Lc_loss = (Lc_loss_txt + Lc_loss_img + Lc_loss_sketch) / (3 * args.batch_size)       
+            # logit_txt = classmodel(text_feature.float())
+            # logit_img = classmodel(image_feature.float())
+            # logit_sketch = classmodel(sketch_feature.float())
+            # Lc_loss_txt = ASL_Loss(logit_txt, cate)
+            # Lc_loss_img = ASL_Loss(logit_img, cate)
+            # Lc_loss_sketch = ASL_Loss(logit_sketch, cate)
+            # Lc_loss = (Lc_loss_txt + Lc_loss_img + Lc_loss_sketch) / (3 * args.batch_size)       
             
             #Ld
             # with torch.no_grad():
             Ld_loss, outputs, _ = gptmodel(tokens, fused_feature, labels=tokens, attention_mask=masks)
 
-            total_loss = (10 * Lc_loss + Ld_loss + 100 * Le_loss) / 111
+            # total_loss = (10 * Lc_loss + Ld_loss + 100 * Le_loss) / 111
+            total_loss =  (Ld_loss + 100 * Le_loss) / 101
             
             total_loss.backward()
             if device == "cpu":
@@ -79,11 +80,11 @@ def train(args, logger, train_dataloader, clipmodel, gptmodel, classmodel):
                 optimizer.step()
                 convert_weights(clipmodel)
             optimizer.zero_grad()
-            
+            logger.add_scalar("epoch", epoch, step)
             if step % 100 == 0:
                 print('[%d / %d] loss: %.10f' %(epoch, step, total_loss))
                 logger.add_scalar("loss/le_loss", Le_loss.detach().cpu().numpy(), step)
-                logger.add_scalar("loss/lc_loss", Lc_loss.detach().cpu().numpy(), step)
+                # logger.add_scalar("loss/lc_loss", Lc_loss.detach().cpu().numpy(), step)
                 logger.add_scalar("loss/ld_loss", Ld_loss.detach().cpu().numpy(), step)
                 logger.add_scalar("loss/total_loss", total_loss.detach().cpu().numpy(), step)
                 torch.save({
@@ -160,5 +161,6 @@ if __name__ == '__main__':
     logger.close()
 
 '''
-python train.py --dataset SFSDDataset --dataset_root_path ~/datasets/SFSD --batch_size 16
+python train.py --dataset SFSDDataset --dataset_root_path ~/datasets/SFSD --batch_size 16 --logger_comment tsbir_SFSD
+python train.py --dataset FScocoDataset --dataset_root_path ~/datasets/fscoco --batch_size 16 --logger_comment tsbir_fscoco
 '''

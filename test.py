@@ -20,23 +20,23 @@ def test(test_dataloader, clipmodel):
         fused_feats = [] 
         for batch in tqdm(test_dataloader):
             image, sketch, txt, _, _, _, = batch
-            image = image.cuda()
-            sketch = sketch.cuda()
-            txt = tokenize([str(txt)])[0].unsqueeze(0).to(device)
+            image, sketch, txt = image.cuda(), sketch.cuda(), txt.cuda()
             image_feature, fused_feature = clipmodel(image, txt, sketch)
-            img_feats.append(image_feature.cpu().detach().numpy()[0])
-            fused_feats.append(fused_feature.cpu().detach().numpy())
+            img_feats.extend(image_feature.cpu().detach().numpy())
+            fused_feats.extend(fused_feature.cpu().detach().numpy())
 
+        img_feats = np.stack(img_feats)
+        fused_feats = np.stack(fused_feats)
         nbrs = NearestNeighbors(n_neighbors=Top_K, algorithm='brute', metric='cosine').fit(img_feats)
-        for index,ff in enumerate(fused_feats):
-            distances, indices = nbrs.kneighbors(ff)
-            for ind in indices:
-                if index in ind:
-                    recall += 1
-        print(round(recall / len(fused_feats), 4))
+        distances, indices = nbrs.kneighbors(fused_feats)
+        for index,indice in enumerate(indices):
+            if index in indice:
+                recall += 1
+        print(round(recall / len(img_feats), 4))
 
 '''
-python test.py --dataset SFSDDataset --dataset_root_path ~/datasets/SFSD
+python test.py --dataset SFSDDataset --dataset_root_path ~/datasets/SFSD --batch_size 32 --resume ./runs/Sep18_00-58-26_cu02tsbir_SFSD/latest_checkpoint.pth
+python test.py --dataset FScocoDataset --dataset_root_path ~/datasets/fscoco --batch_size 32 --resume ./runs/Sep18_00-59-39_cu02tsbir_fscoco/latest_checkpoint.pth
 '''
 if __name__ == '__main__':
     parser = get_parser()
