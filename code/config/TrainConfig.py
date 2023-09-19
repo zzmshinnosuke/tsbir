@@ -3,13 +3,13 @@
 import argparse
 import os
 
-def get_parser(prog='tsbir'):
+def get_parser_train(prog='tsbir'):
     parser=argparse.ArgumentParser(prog)
     
-    parser.add_argument('--gpu_nums',
-                        type=int,
-                        default=1,
-                        help='the number of gpus')
+    parser.add_argument('--gpu',
+                        type=str,
+                        default='0',
+                        help='no of gpus')
     # dataset
     parser.add_argument('--dataset',
                         required=True,
@@ -24,11 +24,7 @@ def get_parser(prog='tsbir'):
                         default=5,
                         help='the number of loader workers')
     
-    parser.add_argument('--class_number',
-                        type=int,
-                        default=41,
-                        help='the class number for a sketch dataset')
-    
+    # logger
     parser.add_argument('--logger_comment',
                         type=str,
                         default="tsbir_SFSD",
@@ -50,15 +46,20 @@ def get_parser(prog='tsbir'):
                         default=100,
                         help='the max epoch number')
     
-    parser.add_argument('--dropout',
-                        type=float,
-                        default=0.1,
-                        help='the dropout ratio')
+    parser.add_argument('--input_dim',
+                        type=int,
+                        default=512,
+                        help='the max epoch number')
     
-    parser.add_argument('--resume',
-                        type=str,
-                        default="./runs/Sep15_18-41-49_cu02tsbir_SFSD_/latest_checkpoint.pth",
-                        help='model postion')
+    parser.add_argument('--hidden_dim',
+                        type=int,
+                        default=256,
+                        help='the max epoch number')
+    
+    parser.add_argument('--output_dim',
+                        type=int,
+                        default=40,
+                        help='the max epoch number')
     
     #lr_scheduler:
     parser.add_argument('--learning_rate',

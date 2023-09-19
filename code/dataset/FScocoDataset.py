@@ -1,5 +1,7 @@
 from PIL import Image
 import os
+import json
+import numpy as np
 
 import torch
 from torch.utils.data import Dataset
@@ -35,6 +37,14 @@ class FScocoDataset(Dataset):
                 self.files.append(line.strip())
 
         assert len(self.files) > 0, 'no txt file find in {}'.format(self.root_path)
+
+        catfile_name = 'FScocoTrain_cat.json' if self.split == 'train' else 'FScocoTest_cat.json'
+        catpath = os.path.join(self.root_path, catfile_name)
+        with open(catpath, "r") as f:
+            try:
+                self.all_cats = json.load(f)
+            except json.decoder.JSONDecodeError:
+                print("don't have "+ catpath)
         
     def __len__(self):
         return len(self.files)
@@ -52,7 +62,7 @@ class FScocoDataset(Dataset):
         image_tran = self._transform(image)
         sketch_tran = self._transform(sketch)
         
-        cate = 0
+        cate =  torch.tensor(np.array(list(self.all_cats[image_id]["cats"]))) 
         
         tokenized = self.tokenizer.encode("<|endoftext|> " + caption + " <|endoftext|>")[:MAX_LENGTH]
         masks = torch.zeros(MAX_LENGTH)
