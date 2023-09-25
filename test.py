@@ -35,9 +35,9 @@ def test(test_dataloader, clipmodel):
         print(round(recall / len(img_feats), 4))
 
 '''
-python test.py --dataset SFSDDataset --dataset_root_path ~/datasets/SFSD --batch_size 32 --resume ./runs/Sep18_00-58-26_cu02tsbir_SFSD/latest_checkpoint.pth
-python test.py --dataset FScocoDataset --dataset_root_path ~/datasets/fscoco --batch_size 32 --resume ./runs/Sep18_00-59-39_cu02tsbir_fscoco/latest_checkpoint.pth
-python test.py --dataset SketchycocoDataset --dataset_root_path ~/datasets/SketchyCOCO --resume ./runs/Sep19_01-16-31_dp3090tsbir_sketchycoco/latest_checkpoint.pth
+python test.py --dataset SFSDDataset --dataset_root_path ~/datasets/SFSD --resume ./runs/Sep19_17-32-00_cu02tsbir_SFSD/latest_checkpoint.pth
+python test.py --dataset FScocoDataset --dataset_root_path ~/datasets/fscoco --resume ./runs/Sep19_17-33-48_cu02tsbir_fscoco/latest_checkpoint.pth
+python test.py --dataset SketchycocoDataset --dataset_root_path ~/datasets/SketchyCOCO --resume ./runs/Sep19_20-02-14_cu02tsbir_sketchycoco/latest_checkpoint.pth
 '''
 if __name__ == '__main__':
     parser = get_parser(split='test')
