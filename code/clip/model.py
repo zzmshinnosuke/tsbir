@@ -386,8 +386,8 @@ class CLIP(nn.Module):
         return self.visual2(image.type(self.dtype))
 
     def encode_text(self, text):
+        # text [batch_size, n_ctx]
         x = self.token_embedding(text).type(self.dtype)  # [batch_size, n_ctx, d_model]
-
         x = x + self.positional_embedding.type(self.dtype)
         x = x.permute(1, 0, 2)  # NLD -> LND
         x = self.transformer(x)
@@ -396,8 +396,9 @@ class CLIP(nn.Module):
 
         # x.shape = [batch_size, n_ctx, transformer.width]
         # take features from the eot embedding (eot_token is the highest number in each sequence)
+        # 只使用每句话中结束单词位置的embedding，这样不会丢失文本的信息吗？
         x = x[torch.arange(x.shape[0]), text.argmax(dim=-1)] @ self.text_projection
-
+        
         return x
     def freeze_nonfc(self):
         for name, param in self.named_parameters():

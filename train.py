@@ -129,7 +129,7 @@ if __name__ == '__main__':
         n_ctx=77,
     )
     gptmodel = GPT2LMHeadModel(config).cuda()
-    gptmodel.load_state_dict(torch.load(model_file, map_location='cpu'), strict=False)
+    # gptmodel.load_state_dict(torch.load(model_file, map_location='cpu'), strict=False)
     gptmodel.train()
     gptmodel = gptmodel.to(device)
 
