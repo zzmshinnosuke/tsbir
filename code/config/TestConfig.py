@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import os
 
 def get_parser_test(prog='tsbir'):
     parser=argparse.ArgumentParser(prog)

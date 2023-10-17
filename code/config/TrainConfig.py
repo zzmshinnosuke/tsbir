@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import os
 
 def get_parser_train(prog='tsbir'):
     parser=argparse.ArgumentParser(prog)
@@ -58,7 +57,7 @@ def get_parser_train(prog='tsbir'):
     
     parser.add_argument('--output_dim',
                         type=int,
-                        default=40,
+                        default=80,
                         help='the max epoch number')
     
     #lr_scheduler:

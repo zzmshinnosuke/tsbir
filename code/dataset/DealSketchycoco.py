@@ -65,7 +65,6 @@ class Base():
         catIds = self.coco.getCatIds(catNms=["skis"])  # if catNums==[],会返回所有类别
         imgIds = self.coco.getImgIds(catIds=catIds)  # 000000562561.jpg
         imgs = self.coco.loadImgs(imgIds[np.random.randint(0, len(imgIds))])
-        # imgs = self.coco.loadImgs(ids=[562561])
         OImage = imgs[np.random.randint(0, len(imgs))]
         return OImage
 

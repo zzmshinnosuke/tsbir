@@ -5,9 +5,7 @@
 
 import os
 import json
-from collections import namedtuple
 from tqdm import tqdm
-import pickle
 
 import torch
 import torch.nn as nn
@@ -60,7 +58,6 @@ def train(args, logger, train_dataloader, clipmodel, gptmodel, classmodel):
             Lc_loss = (Lc_loss_txt + Lc_loss_img + Lc_loss_sketch) / (3 * args.batch_size)       
             
             #Ld
-            # with torch.no_grad():
             Ld_loss, outputs, _ = gptmodel(tokens, fused_feature, labels=tokens, attention_mask=masks)
 
             total_loss = (10 * Lc_loss + Ld_loss + 100 * Le_loss) / 111
@@ -129,7 +126,6 @@ if __name__ == '__main__':
         n_ctx=77,
     )
     gptmodel = GPT2LMHeadModel(config).cuda()
-    # gptmodel.load_state_dict(torch.load(model_file, map_location='cpu'), strict=False)
     gptmodel.train()
     gptmodel = gptmodel.to(device)
 

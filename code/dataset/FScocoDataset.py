@@ -53,7 +53,7 @@ class FScocoDataset(Dataset):
         image_id = self.files[index]
         caption_path = os.path.join(self.root_path, 'text', image_id + '.txt')
         with open(caption_path, 'r', encoding='utf-8') as f:
-                caption = f.readline().strip()
+            caption = f.readline().strip()
 
         image_path = os.path.join(self.images_path, image_id + ".jpg")
         sketch_path = os.path.join(self.sketch_path, image_id + ".jpg")

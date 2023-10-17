@@ -8,7 +8,6 @@ import sys
 import shutil
 import json
 from tqdm import tqdm
-import glob
 
 class Base():
     def __init__(self, cocoPath, dataType):
