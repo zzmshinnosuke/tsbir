@@ -12,7 +12,7 @@ from code.clip import _transform, tokenize
 MAX_LENGTH = 77
 input_resolution = 224
 
-class FScocoDataset(Dataset):
+class FSCOCODataset(Dataset):
     def __init__(self, config, split = "train"):
         self.config = config
         self.split = split

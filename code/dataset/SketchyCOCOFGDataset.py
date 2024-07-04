@@ -1,8 +1,8 @@
 from PIL import Image
 import numpy as np
-import glob
 import os
 import json
+import re
 
 import torch
 from torch.utils.data import Dataset
@@ -13,13 +13,13 @@ from code.clip import _transform, tokenize
 MAX_LENGTH = 77
 input_resolution = 224
 
-class SketchycocoDataset(Dataset):
+class SketchyCOCOFGDataset(Dataset):
     def __init__(self, config, split = "train"):
         self.config = config
         self.split = split
         self.root_path = config.dataset_root_path
-        self.images_path = os.path.join(self.root_path, "Scene", "GT")
-        self.sketch_path = os.path.join(self.root_path, "Scene", "Sketch", "paper_version")
+        self.images_path = os.path.join(self.root_path)
+        self.sketch_path = os.path.join(self.root_path)
         self._transform = _transform(input_resolution, is_train=False)
         self.files = list()
         self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -27,34 +27,27 @@ class SketchycocoDataset(Dataset):
 
     def load_files_path(self):
         assert self.split in ['train', 'test', 'val'], 'unknown split {}'.format(self.split)
-
-        if self.split == "train":
-            self.splitname = 'trainInTrain'
-        elif self.split == "val":
-            self.splitname = 'val'
-        elif self.split == "test":
-            self.splitname = 'valInTrain'
-        self.files = glob.glob(os.path.join(self.images_path, self.splitname, '*.png'))
-        assert len(self.files)>0, 'no sketch json file find in {}'.format(self.root_path)
-
-        captionpath = os.path.join(self.root_path, self.splitname+'.json')
+ 
+        captionpath = os.path.join(self.root_path, self.split+'.json')
         with open(captionpath, "r") as f:
             try:
                 self.all_captions = json.load(f)
             except json.decoder.JSONDecodeError:
                 print("don't have "+ captionpath)
         
+        keys_image_id = self.all_captions.keys()
+        for ki in keys_image_id:
+            self.files.append((ki, self.all_captions[ki]["captions"][0]))
+        assert len(self.files)>0, 'no sketch json file find in {}'.format(self.root_path)
+        
     def __len__(self):
         return len(self.files)
 
     def __getitem__(self, index):
-        file = self.files[index]
-        imageId = os.path.basename(file).split(".")[0]
+        imageId, caption = self.files[index][0], self.files[index][1]
 
-        caption = self.all_captions[imageId]['captions'][0]
-
-        image_path = file
-        sketch_path = os.path.join(self.sketch_path, self.splitname, imageId + ".png")
+        image_path = os.path.join(self.images_path, self.split, 'image', imageId + ".png")
+        sketch_path = os.path.join(self.sketch_path, self.split, 'sketch', imageId + ".png")
         image = Image.open(image_path)
         sketch = Image.open(sketch_path)
         image_tran = self._transform(image)
@@ -71,4 +64,4 @@ class SketchycocoDataset(Dataset):
         txt = tokenize([str(caption)])[0]
 
         return image_tran, sketch_tran, txt, cate , tokens, masks
-        
+    

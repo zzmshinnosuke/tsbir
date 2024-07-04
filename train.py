@@ -105,13 +105,15 @@ if __name__ == '__main__':
 
     # load clip model
     model_config_file = './code/training/model_configs/ViT-B-16.json'
-    model_file = './model_pt/tsbir_model_final.pt'
+    # model_file = './model_pt/tsbir_model_final.pt'
+    model_file = './runs/Oct17_18-55-42_cu02tsbir_sketchycoco/latest_checkpoint.pth'
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     with open(model_config_file, 'r') as f:
         model_info = json.load(f)
     model = CLIP(**model_info)
     checkpoints = torch.load(model_file, map_location='cpu')
-    sd = checkpoints["state_dict"]
+    # sd = checkpoints["state_dict"]
+    sd = checkpoints["model_state_dict"]
     if next(iter(sd.items()))[0].startswith('module'):
         sd = {k[len('module.'):]: v for k, v in sd.items()}
     model.load_state_dict(sd, strict=False)
@@ -150,6 +152,6 @@ if __name__ == '__main__':
 
 '''
 python train.py --dataset SFSDDataset --dataset_root_path ~/datasets/SFSD --logger_comment tsbir_SFSD
-python train.py --dataset FScocoDataset --dataset_root_path ~/datasets/fscoco --output_dim 80 --logger_comment tsbir_fscoco
-python train.py --dataset SketchycocoDataset --dataset_root_path ~/datasets/SketchyCOCO --output_dim 80 --logger_comment tsbir_sketchycoco
+python train.py --dataset FSCOCODataset --dataset_root_path ~/datasets/fscoco --output_dim 80 --logger_comment tsbir_fscoco
+python train.py --dataset SketchyCOCOFGDataset --dataset_root_path ~/datasets/SketchyCOCO-lf --output_dim 80 --logger_comment tsbir_sketchycoco_lf
 '''

@@ -36,8 +36,9 @@ def test(test_dataloader, clipmodel):
 
 '''
 python test.py --dataset SFSDDataset --dataset_root_path ~/datasets/SFSD-open --resume ./runs/Oct17_15-10-29_dp3090tsbir_SFSD-open/latest_checkpoint.pth
-python test.py --dataset FScocoDataset --dataset_root_path ~/datasets/fscoco --resume ./runs/Oct17_16-00-07_cu02tsbir_fscoco/latest_checkpoint.pth
-python test.py --dataset SketchycocoDataset --dataset_root_path ~/datasets/SketchyCOCO --resume ./runs/Oct17_18-55-42_cu02tsbir_sketchycoco/latest_checkpoint.pth
+python test.py --dataset FSCOCODataset --dataset_root_path ~/datasets/fscoco --resume ./runs/Oct17_16-00-07_cu02tsbir_fscoco/latest_checkpoint.pth
+python test.py --dataset SketchyCOCODataset --dataset_root_path ~/datasets/SketchyCOCO --resume ./runs/Oct17_18-55-42_cu02tsbir_sketchycoco/latest_checkpoint.pth
+python test.py --dataset SketchyCOCOFGDataset --dataset_root_path ~/datasets/SketchyCOCO-lf --resume ./runs/Feb03_10-40-16_dp3090tsbir_sketchycoco_lf/latest_checkpoint.pth
 '''
 if __name__ == '__main__':
     parser = get_parser(split='test')

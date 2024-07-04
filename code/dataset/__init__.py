@@ -1,6 +1,7 @@
 from .SFSDDataset import SFSDDataset
-from .SketchycocoDataset import SketchycocoDataset
-from .FScocoDataset import FScocoDataset
+from .SketchyCOCODataset import SketchyCOCODataset
+from .FSCOCODataset import FSCOCODataset
+from .SketchyCOCOFGDataset import SketchyCOCOFGDataset
 
 import torch.utils.data as td
 
